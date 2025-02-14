@@ -1,0 +1,38 @@
+body {
+    background-image: url('background.jpg');
+    /* background-size: cover;
+    background-position: center;  */
+    background-repeat: repeat; }
+
+
+
+
+.header-div{
+    align-items: center;
+    height: auto;
+    width: auto;
+    display: flex;
+    justify-content: center;
+}
+.header{
+    background-color: black;
+    width: 800px;
+    height: 50px;
+}
+.neckholder{
+    background-color: #1c1c1c;
+    background-blend-mode:overlay;
+    opacity: 50%;
+    padding: 2.5rem;
+    height: 17.5rem;
+    align-items: center;
+
+}
+.neckone{
+    background-color: black;
+    opacity: 100%;
+    padding : 2.5rem;
+    height: 12.5rem;
+    width: 12.5rem;
+    border-radius: 5%;
+}
