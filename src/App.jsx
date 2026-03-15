@@ -13,6 +13,7 @@ import Contact from './components/Contact';
 import SpaceshipCursor from './components/SpaceshipCursor';
 import SnowCursor from './components/SnowCursor';
 import ProjectPage from './pages/ProjectPage';
+import ExperiencePage from './pages/ExperiencePage';
 import AdminPage from './pages/AdminPage';
 import PageTransition from './components/PageTransition';
 
@@ -45,6 +46,7 @@ function AppInner() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/project/:id" element={<ProjectPage />} />
+          <Route path="/experience/:id" element={<ExperiencePage />} />
           <Route path="/admin" element={<AdminPage />} />
         </Routes>
       </PageTransition>

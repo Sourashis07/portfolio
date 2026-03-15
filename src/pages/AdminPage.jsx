@@ -244,7 +244,7 @@ function ProjectsTab() {
 }
 
 // ── EXPERIENCE TAB ────────────────────────────────────────
-const EMPTY_EXP = { company: '', role: '', startDate: '', endDate: '', current: false, description: '', techUsed: '' };
+const EMPTY_EXP = { company: '', role: '', startDate: '', endDate: '', current: false, description: '', techUsed: '', location: '', type: '', highlights: '' };
 
 function ExperienceForm({ initial, onSave, onCancel }) {
   const [data, setData] = useState(initial || EMPTY_EXP);
@@ -257,12 +257,15 @@ function ExperienceForm({ initial, onSave, onCancel }) {
         <Field label="ROLE / TITLE" value={data.role} onChange={set('role')} />
         <Field label="START DATE" value={data.startDate} onChange={set('startDate')} type="date" />
         <Field label="END DATE" value={data.endDate} onChange={set('endDate')} type="date" placeholder="Leave blank if current" />
+        <Field label="LOCATION" value={data.location} onChange={set('location')} placeholder="Remote / Bangalore, India" />
+        <Field label="TYPE" value={data.type} onChange={set('type')} placeholder="Full-time / Internship / Contract" />
       </div>
       <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 10 }}>
         <input type="checkbox" id="current" checked={!!data.current} onChange={e => set('current')(e.target.checked)} style={{ accentColor: '#00f5ff' }} />
         <label htmlFor="current" style={{ ...labelStyle, marginBottom: 0, color: '#94a3b8' }}>CURRENTLY WORKING HERE</label>
       </div>
       <Field label="DESCRIPTION" value={data.description} onChange={set('description')} as="textarea" rows={3} />
+      <Field label="KEY HIGHLIGHTS (one per line)" value={data.highlights} onChange={set('highlights')} as="textarea" rows={4} placeholder="Led migration to microservices, reducing latency by 40%&#10;Built CI/CD pipeline with GitHub Actions" />
       <Field label="TECHNOLOGIES USED (comma separated)" value={data.techUsed} onChange={set('techUsed')} placeholder="React, Node.js, AWS" />
       <div style={{ display: 'flex', gap: 12 }}>
         <button onClick={() => onSave(data)} style={{ padding: '10px 24px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#00f5ff,#3b82f6)', color: '#020408', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, fontWeight: 700 }}>
