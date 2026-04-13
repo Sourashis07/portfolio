@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { getExperiences } from '../firebase';
+import { playClick, playNav, playHover, playModalOpen, playModalClose, playError, playSuccess } from '../sounds';
 
 const ADMIN_PASSWORD = 'soura@admin2025';
-const BASE_LINKS = ['About', 'Projects', 'Skills', 'Education', 'Contact'];
+const BASE_LINKS = ['About', 'Projects', 'Education', 'Certifications', 'Competitions', 'Hobbies', 'Contact'];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -22,7 +23,7 @@ export default function Navbar() {
   }, []);
 
   const links = hasExp
-    ? ['About', 'Experience', 'Projects', 'Skills', 'Education', 'Contact']
+    ? ['About', 'Experience', 'Projects', 'Education', 'Certifications', 'Competitions', 'Hobbies', 'Contact']
     : BASE_LINKS;
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function Navbar() {
   }, []);
 
   const scrollTo = (id) => {
+    playNav();
     document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
     setOpen(false);
   };
@@ -42,8 +44,10 @@ export default function Navbar() {
       setShowModal(false);
       setPassword('');
       setError('');
+      playSuccess();
       navigate('/admin');
     } else {
+      playError();
       setError('ACCESS DENIED — INVALID PASSWORD');
       setPassword('');
     }
@@ -79,7 +83,7 @@ export default function Navbar() {
           ))}
           {/* Theme toggle removed */}
           <button
-            onClick={() => { setShowModal(true); setError(''); setPassword(''); }}
+            onClick={() => { setShowModal(true); setError(''); setPassword(''); playModalOpen(); }}
             style={{
               background: 'transparent', border: '1px solid rgba(168,85,247,0.4)',
               color: '#a855f7', cursor: 'pointer', fontFamily: 'Orbitron',
@@ -138,7 +142,7 @@ export default function Navbar() {
               background: 'var(--modal-bg)', backdropFilter: 'blur(12px)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
-            onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); playModalClose(); } }}
           >
             <motion.div
               initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
@@ -177,7 +181,7 @@ export default function Navbar() {
                 />
                 {error && <p style={{ color: '#ef4444', fontSize: '0.75rem', fontFamily: 'Orbitron', letterSpacing: 1, marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
-                  <button type="button" onClick={() => setShowModal(false)}
+                  <button type="button" onClick={() => { setShowModal(false); playModalClose(); }}
                     style={{ flex: 1, padding: '12px', borderRadius: 6, background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#64748b', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1 }}
                   >CANCEL</button>
                   <button type="submit"

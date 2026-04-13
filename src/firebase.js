@@ -76,6 +76,50 @@ export const saveEducation = async (id, data) => {
 };
 export const deleteEducation = async (id) => deleteDoc(doc(db, 'education', id));
 
+// Certifications
+export const getCertifications = async () => {
+  const snap = await getDocs(collection(db, 'certifications'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+export const saveCertification = async (id, data) => {
+  if (id) return updateDoc(doc(db, 'certifications', id), data);
+  return addDoc(collection(db, 'certifications'), data);
+};
+export const deleteCertification = async (id) => deleteDoc(doc(db, 'certifications', id));
+
+// Competitions
+export const getCompetitions = async () => {
+  const snap = await getDocs(collection(db, 'competitions'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+export const saveCompetition = async (id, data) => {
+  if (id) return updateDoc(doc(db, 'competitions', id), data);
+  return addDoc(collection(db, 'competitions'), data);
+};
+export const deleteCompetition = async (id) => deleteDoc(doc(db, 'competitions', id));
+
+// Hobbies
+export const getHobbies = async () => {
+  const snap = await getDocs(collection(db, 'hobbies'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+export const saveHobby = async (id, data) => {
+  if (id) return updateDoc(doc(db, 'hobbies', id), data);
+  return addDoc(collection(db, 'hobbies'), data);
+};
+export const deleteHobby = async (id) => deleteDoc(doc(db, 'hobbies', id));
+
+// Hobby Posts (subcollection: hobbies/{hobbyId}/posts)
+export const getHobbyPosts = async (hobbyId) => {
+  const snap = await getDocs(collection(db, 'hobbies', hobbyId, 'posts'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => b.date?.localeCompare(a.date));
+};
+export const saveHobbyPost = async (hobbyId, postId, data) => {
+  if (postId) return updateDoc(doc(db, 'hobbies', hobbyId, 'posts', postId), data);
+  return addDoc(collection(db, 'hobbies', hobbyId, 'posts'), data);
+};
+export const deleteHobbyPost = async (hobbyId, postId) => deleteDoc(doc(db, 'hobbies', hobbyId, 'posts', postId));
+
 // Messages
 export const saveMessage = async (data) => addDoc(collection(db, 'messages'), { ...data, sentAt: new Date().toISOString(), read: false });
 export const getMessages = async () => {

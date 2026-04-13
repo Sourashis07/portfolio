@@ -8,12 +8,17 @@ import {
   getExperiences, saveExperience, deleteExperience,
   getSkills, saveSkill, deleteSkill,
   getEducation, saveEducation, deleteEducation,
+  getCertifications, saveCertification, deleteCertification,
+  getCompetitions, saveCompetition, deleteCompetition,
+  getHobbies, saveHobby, deleteHobby,
+  getHobbyPosts, saveHobbyPost, deleteHobbyPost,
   getMessages, markMessageRead, deleteMessage,
 } from '../firebase';
 import Starfield from '../components/Starfield';
 import SpaceshipCursor from '../components/SpaceshipCursor';
+import { playSuccess, playDelete, playClick } from '../sounds';
 
-const TABS = ['HERO', 'PROFILE', 'PROJECTS', 'EXPERIENCE', 'SKILLS', 'EDUCATION', 'MESSAGES'];
+const TABS = ['HERO', 'PROFILE', 'PROJECTS', 'EXPERIENCE', 'SKILLS', 'EDUCATION', 'CERTIFICATIONS', 'COMPETITIONS', 'HOBBIES', 'HOBBY POSTS', 'MESSAGES'];
 
 const inputStyle = (focused) => ({
   width: '100%', background: 'rgba(255,255,255,0.04)',
@@ -74,6 +79,7 @@ function HeroTab() {
 
   const save = async () => {
     await saveHero(data);
+    playSuccess();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -99,6 +105,7 @@ function ProfileTab() {
 
   const save = async () => {
     await saveProfile(data);
+    playSuccess();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -195,6 +202,7 @@ function ProjectsTab() {
 
   const handleSave = async (data) => {
     await saveProject(editing?.id || null, data);
+    playSuccess();
     setMsg('Project saved!');
     setEditing(null);
     load();
@@ -203,6 +211,7 @@ function ProjectsTab() {
 
   const handleDelete = async (id) => {
     if (!confirm('Delete this project?')) return;
+    playDelete();
     await deleteProject(id);
     load();
   };
@@ -614,6 +623,319 @@ function MessagesTab() {
   );
 }
 
+// ── CERTIFICATIONS TAB ───────────────────────────────────
+const EMPTY_CERT = { title: '', issuer: '', date: '', credentialUrl: '', imageUrl: '', description: '' };
+
+function CertificationsTab() {
+  const [items, setItems] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_CERT);
+
+  const load = () => getCertifications().then(setItems);
+  useEffect(() => { load(); }, []);
+
+  const set = (k) => (v) => setForm(p => ({ ...p, [k]: v }));
+  const openNew = () => { setForm(EMPTY_CERT); setEditing('new'); };
+  const openEdit = (item) => { setForm(item); setEditing(item); };
+
+  const handleSave = async () => {
+    await saveCertification(editing === 'new' ? null : editing.id, form);
+    setEditing(null);
+    load();
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this certification?')) return;
+    await deleteCertification(id);
+    load();
+  };
+
+  return (
+    <div>
+      {editing && (
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: 12, padding: 28, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '0 24px' }}>
+            <Field label="TITLE" value={form.title} onChange={set('title')} />
+            <Field label="ISSUER" value={form.issuer} onChange={set('issuer')} />
+            <Field label="DATE" value={form.date} onChange={set('date')} type="date" />
+            <Field label="CREDENTIAL URL" value={form.credentialUrl} onChange={set('credentialUrl')} placeholder="https://..." />
+            <Field label="CERTIFICATE IMAGE (Google Drive link)" value={form.imageUrl} onChange={set('imageUrl')} placeholder="https://drive.google.com/file/d/..." />
+          </div>
+          <Field label="DESCRIPTION" value={form.description} onChange={set('description')} as="textarea" rows={3} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={handleSave} style={{ padding: '10px 24px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#00f5ff,#3b82f6)', color: '#020408', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, fontWeight: 700 }}>SAVE</button>
+            <button onClick={() => setEditing(null)} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: 'transparent', color: '#64748b', fontFamily: 'Orbitron', fontSize: '0.75rem' }}>CANCEL</button>
+          </div>
+        </div>
+      )}
+      {!editing && (
+        <button onClick={openNew} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(0,245,255,0.3)', cursor: 'pointer', background: 'transparent', color: '#00f5ff', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, marginBottom: 24 }}>
+          + ADD CERTIFICATION
+        </button>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {items.map(item => (
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.1)', borderRadius: 10, padding: '14px 20px' }}>
+            <div>
+              <span style={{ fontFamily: 'Orbitron', fontSize: '0.88rem', color: '#00f5ff' }}>{item.title}</span>
+              <span style={{ marginLeft: 10, fontSize: '0.78rem', color: '#64748b' }}>{item.issuer}</span>
+              {item.date && <span style={{ marginLeft: 10, fontSize: '0.72rem', color: '#475569' }}>{item.date}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => openEdit(item)} style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid rgba(0,245,255,0.3)', background: 'transparent', color: '#00f5ff', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.7rem' }}>EDIT</button>
+              <button onClick={() => handleDelete(item.id)} style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.7rem' }}>DELETE</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── COMPETITIONS TAB ──────────────────────────────────────
+const EMPTY_COMP = { title: '', organizer: '', date: '', result: '', description: '', tags: '', imageUrl: '' };
+
+function CompetitionsTab() {
+  const [items, setItems] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_COMP);
+
+  const load = () => getCompetitions().then(setItems);
+  useEffect(() => { load(); }, []);
+
+  const set = (k) => (v) => setForm(p => ({ ...p, [k]: v }));
+  const openNew = () => { setForm(EMPTY_COMP); setEditing('new'); };
+  const openEdit = (item) => { setForm({ ...item, tags: Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || '') }); setEditing(item); };
+
+  const handleSave = async () => {
+    const payload = { ...form, tags: typeof form.tags === 'string' ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : form.tags };
+    await saveCompetition(editing === 'new' ? null : editing.id, payload);
+    setEditing(null);
+    load();
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this competition?')) return;
+    await deleteCompetition(id);
+    load();
+  };
+
+  return (
+    <div>
+      {editing && (
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: 12, padding: 28, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '0 24px' }}>
+            <Field label="COMPETITION TITLE" value={form.title} onChange={set('title')} />
+            <Field label="ORGANIZER" value={form.organizer} onChange={set('organizer')} />
+            <Field label="DATE" value={form.date} onChange={set('date')} type="date" />
+            <Field label="RESULT" value={form.result} onChange={set('result')} placeholder="1st Place / Finalist" />
+          </div>
+          <Field label="DESCRIPTION" value={form.description} onChange={set('description')} as="textarea" rows={3} />
+          <Field label="CERTIFICATE / PROOF IMAGE (Google Drive link)" value={form.imageUrl} onChange={set('imageUrl')} placeholder="https://drive.google.com/file/d/..." />
+          <Field label="TAGS (comma separated)" value={form.tags} onChange={set('tags')} placeholder="React, Python, ML" />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={handleSave} style={{ padding: '10px 24px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#00f5ff,#3b82f6)', color: '#020408', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, fontWeight: 700 }}>SAVE</button>
+            <button onClick={() => setEditing(null)} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: 'transparent', color: '#64748b', fontFamily: 'Orbitron', fontSize: '0.75rem' }}>CANCEL</button>
+          </div>
+        </div>
+      )}
+      {!editing && (
+        <button onClick={openNew} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(0,245,255,0.3)', cursor: 'pointer', background: 'transparent', color: '#00f5ff', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, marginBottom: 24 }}>
+          + ADD COMPETITION
+        </button>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {items.map(item => (
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.1)', borderRadius: 10, padding: '14px 20px' }}>
+            <div>
+              <span style={{ fontFamily: 'Orbitron', fontSize: '0.88rem', color: '#00f5ff' }}>{item.title}</span>
+              {item.result && <span style={{ marginLeft: 10, fontSize: '0.78rem', color: '#f59e0b' }}>{item.result}</span>}
+              {item.organizer && <span style={{ marginLeft: 10, fontSize: '0.72rem', color: '#475569' }}>{item.organizer}</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => openEdit(item)} style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid rgba(0,245,255,0.3)', background: 'transparent', color: '#00f5ff', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.7rem' }}>EDIT</button>
+              <button onClick={() => handleDelete(item.id)} style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.7rem' }}>DELETE</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── HOBBIES TAB ───────────────────────────────────────────
+const EMPTY_HOBBY = { name: '', icon: '', description: '', coverUrl: '' };
+
+function HobbiesTab() {
+  const [items, setItems] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_HOBBY);
+
+  const load = () => getHobbies().then(setItems);
+  useEffect(() => { load(); }, []);
+
+  const set = (k) => (v) => setForm(p => ({ ...p, [k]: v }));
+  const openNew = () => { setForm(EMPTY_HOBBY); setEditing('new'); };
+  const openEdit = (item) => { setForm(item); setEditing(item); };
+
+  const handleSave = async () => {
+    await saveHobby(editing === 'new' ? null : editing.id, form);
+    setEditing(null);
+    load();
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this hobby?')) return;
+    await deleteHobby(id);
+    load();
+  };
+
+  return (
+    <div>
+      {editing && (
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: 12, padding: 28, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: '0 24px' }}>
+            <Field label="HOBBY NAME" value={form.name} onChange={set('name')} />
+            <Field label="ICON (emoji)" value={form.icon} onChange={set('icon')} placeholder="🎵" />
+            <Field label="COVER IMAGE URL (Google Drive or direct)" value={form.coverUrl} onChange={set('coverUrl')} placeholder="https://drive.google.com/file/d/..." />
+          </div>
+          <Field label="DESCRIPTION" value={form.description} onChange={set('description')} as="textarea" rows={3} />
+          <div style={{ display: 'flex', gap: 12 }}>
+            <button onClick={handleSave} style={{ padding: '10px 24px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#00f5ff,#3b82f6)', color: '#020408', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, fontWeight: 700 }}>SAVE</button>
+            <button onClick={() => setEditing(null)} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: 'transparent', color: '#64748b', fontFamily: 'Orbitron', fontSize: '0.75rem' }}>CANCEL</button>
+          </div>
+        </div>
+      )}
+      {!editing && (
+        <button onClick={openNew} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(0,245,255,0.3)', cursor: 'pointer', background: 'transparent', color: '#00f5ff', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, marginBottom: 24 }}>
+          + ADD HOBBY
+        </button>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(240px,1fr))', gap: 12 }}>
+        {items.map(item => (
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.1)', borderRadius: 10, padding: '12px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: '1.4rem' }}>{item.icon || '✨'}</span>
+              <span style={{ fontFamily: 'Orbitron', fontSize: '0.82rem', color: '#00f5ff' }}>{item.name}</span>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => openEdit(item)} style={{ padding: '5px 12px', borderRadius: 4, border: '1px solid rgba(0,245,255,0.3)', background: 'transparent', color: '#00f5ff', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.65rem' }}>EDIT</button>
+              <button onClick={() => handleDelete(item.id)} style={{ padding: '5px 12px', borderRadius: 4, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.65rem' }}>DEL</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── HOBBY POSTS TAB ──────────────────────────────────────
+const EMPTY_POST = { title: '', type: 'photo', date: '', content: '', imageUrl: '', videoUrl: '', linkUrl: '', tags: '' };
+const POST_TYPES = ['photo', 'video', 'blog', 'link'];
+
+function HobbyPostsTab() {
+  const [hobbies, setHobbies] = useState([]);
+  const [selectedHobby, setSelectedHobby] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(EMPTY_POST);
+
+  useEffect(() => {
+    getHobbies().then(h => { setHobbies(h); if (h.length > 0) setSelectedHobby(h[0]); });
+  }, []);
+
+  useEffect(() => {
+    if (selectedHobby) getHobbyPosts(selectedHobby.id).then(setPosts);
+  }, [selectedHobby]);
+
+  const set = (k) => (v) => setForm(p => ({ ...p, [k]: v }));
+  const openNew = () => { setForm(EMPTY_POST); setEditing('new'); };
+  const openEdit = (post) => { setForm(post); setEditing(post); };
+
+  const handleSave = async () => {
+    await saveHobbyPost(selectedHobby.id, editing === 'new' ? null : editing.id, form);
+    playSuccess();
+    setEditing(null);
+    getHobbyPosts(selectedHobby.id).then(setPosts);
+  };
+
+  const handleDelete = async (postId) => {
+    if (!confirm('Delete this post?')) return;
+    playDelete();
+    await deleteHobbyPost(selectedHobby.id, postId);
+    getHobbyPosts(selectedHobby.id).then(setPosts);
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28 }}>
+        {hobbies.map(h => (
+          <button key={h.id} onClick={() => { setSelectedHobby(h); setEditing(null); }}
+            style={{
+              padding: '7px 18px', borderRadius: 6,
+              border: `1px solid ${selectedHobby?.id === h.id ? '#00f5ff' : 'rgba(255,255,255,0.1)'}`,
+              background: selectedHobby?.id === h.id ? 'rgba(0,245,255,0.1)' : 'transparent',
+              color: selectedHobby?.id === h.id ? '#00f5ff' : '#64748b',
+              fontFamily: 'Orbitron', fontSize: '0.72rem', letterSpacing: 1, cursor: 'pointer',
+            }}>{h.name}</button>
+        ))}
+      </div>
+
+      {selectedHobby && (
+        <>
+          {editing && (
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.15)', borderRadius: 12, padding: 28, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: '0 24px' }}>
+                <Field label="TITLE" value={form.title} onChange={set('title')} />
+                <div style={{ marginBottom: 18 }}>
+                  <label style={labelStyle}>TYPE</label>
+                  <select value={form.type} onChange={e => set('type')(e.target.value)}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, padding: '10px 14px', color: '#e2e8f0', fontSize: '0.9rem', outline: 'none' }}>
+                    {POST_TYPES.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
+                  </select>
+                </div>
+                <Field label="DATE" value={form.date} onChange={set('date')} type="date" />
+                <Field label="TAGS (comma separated)" value={form.tags} onChange={set('tags')} placeholder="nature, night, dslr" />
+              </div>
+              <Field label="IMAGE URL (Google Drive or direct)" value={form.imageUrl} onChange={set('imageUrl')} placeholder="https://drive.google.com/file/d/..." />
+              <Field label="YOUTUBE VIDEO URL" value={form.videoUrl} onChange={set('videoUrl')} placeholder="https://youtu.be/..." />
+              <Field label="EXTERNAL LINK" value={form.linkUrl} onChange={set('linkUrl')} placeholder="https://..." />
+              <Field label="CAPTION / BLOG CONTENT" value={form.content} onChange={set('content')} as="textarea" rows={5} placeholder="Write your post content here..." />
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button onClick={handleSave} style={{ padding: '10px 24px', borderRadius: 6, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg,#00f5ff,#3b82f6)', color: '#020408', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, fontWeight: 700 }}>SAVE POST</button>
+                <button onClick={() => setEditing(null)} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', background: 'transparent', color: '#64748b', fontFamily: 'Orbitron', fontSize: '0.75rem' }}>CANCEL</button>
+              </div>
+            </div>
+          )}
+          {!editing && (
+            <button onClick={openNew} style={{ padding: '10px 24px', borderRadius: 6, border: '1px solid rgba(0,245,255,0.3)', cursor: 'pointer', background: 'transparent', color: '#00f5ff', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1, marginBottom: 24 }}>
+              + ADD POST
+            </button>
+          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {posts.map(post => (
+              <div key={post.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(0,245,255,0.1)', borderRadius: 10, padding: '14px 20px' }}>
+                <div>
+                  <span style={{ fontFamily: 'Orbitron', fontSize: '0.85rem', color: '#00f5ff' }}>{post.title || 'Untitled'}</span>
+                  <span style={{ marginLeft: 10, fontSize: '0.72rem', color: '#475569', fontFamily: 'Orbitron' }}>{post.type?.toUpperCase()}</span>
+                  {post.date && <span style={{ marginLeft: 10, fontSize: '0.7rem', color: '#334155' }}>{post.date}</span>}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => openEdit(post)} style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid rgba(0,245,255,0.3)', background: 'transparent', color: '#00f5ff', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.7rem' }}>EDIT</button>
+                  <button onClick={() => handleDelete(post.id)} style={{ padding: '6px 14px', borderRadius: 4, border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontFamily: 'Orbitron', fontSize: '0.7rem' }}>DELETE</button>
+                </div>
+              </div>
+            ))}
+            {posts.length === 0 && !editing && (
+              <p style={{ color: '#334155', fontFamily: 'Orbitron', fontSize: '0.75rem', letterSpacing: 1 }}>NO POSTS YET</p>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ── MAIN ADMIN PAGE ───────────────────────────────────────
 export default function AdminPage() {
   const [tab, setTab] = useState('HERO');
@@ -661,13 +983,17 @@ export default function AdminPage() {
             transition={{ duration: 0.25 }}
             style={{ maxWidth: 860 }}
           >
-            {tab === 'HERO'       && <HeroTab />}
-            {tab === 'PROFILE'    && <ProfileTab />}
-            {tab === 'PROJECTS'   && <ProjectsTab />}
-            {tab === 'EXPERIENCE' && <ExperienceTab />}
-            {tab === 'SKILLS'     && <SkillsTab />}
-            {tab === 'EDUCATION'  && <EducationTab />}
-            {tab === 'MESSAGES'   && <MessagesTab />}
+            {tab === 'HERO'           && <HeroTab />}
+            {tab === 'PROFILE'        && <ProfileTab />}
+            {tab === 'PROJECTS'       && <ProjectsTab />}
+            {tab === 'EXPERIENCE'     && <ExperienceTab />}
+            {tab === 'SKILLS'         && <SkillsTab />}
+            {tab === 'EDUCATION'      && <EducationTab />}
+            {tab === 'CERTIFICATIONS' && <CertificationsTab />}
+            {tab === 'COMPETITIONS'   && <CompetitionsTab />}
+            {tab === 'HOBBIES'        && <HobbiesTab />}
+            {tab === 'HOBBY POSTS'    && <HobbyPostsTab />}
+            {tab === 'MESSAGES'       && <MessagesTab />}
           </motion.div>
         </AnimatePresence>
       </div>

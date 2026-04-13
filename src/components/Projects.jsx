@@ -3,6 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { getProjects } from '../firebase';
 import { useTheme } from '../context/ThemeContext';
+import { playCardSwitch, playClick } from '../sounds';
 
 // Fallback while Firestore loads or if empty
 const FALLBACK = [
@@ -31,10 +32,21 @@ export default function Projects() {
   const { theme } = useTheme();
   const isLight = theme === 'light';
 
+  const lastWheel = useRef(0);
+
   const onWheel = useCallback((e) => {
+    // Only hijack scroll if the pointer is directly over the active card
+    const activeEl = scrollRef.current?.querySelector('[data-active="true"]');
+    if (!activeEl) return;
+    const r = activeEl.getBoundingClientRect();
+    const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    if (!inside) return;
+    const now = Date.now();
+    if (now - lastWheel.current < 500) { e.preventDefault(); return; }
     e.preventDefault();
-    if (e.deltaY > 30) setActive(a => (a + 1) % N);
-    else if (e.deltaY < -30) setActive(a => (a - 1 + N) % N);
+    lastWheel.current = now;
+    if (e.deltaY > 0) { setActive(a => (a + 1) % N); playCardSwitch(); }
+    else { setActive(a => (a - 1 + N) % N); playCardSwitch(); }
   }, [N]);
 
   useEffect(() => {
@@ -49,8 +61,8 @@ export default function Projects() {
   const onTouchEnd = (e) => {
     if (touchStart.current === null) return;
     const dx = touchStart.current - e.changedTouches[0].clientX;
-    if (dx > 40) setActive(a => (a + 1) % N);
-    else if (dx < -40) setActive(a => (a - 1 + N) % N);
+    if (dx > 40) { setActive(a => (a + 1) % N); playCardSwitch(); }
+    else if (dx < -40) { setActive(a => (a - 1 + N) % N); playCardSwitch(); }
     touchStart.current = null;
   };
 
@@ -85,11 +97,12 @@ export default function Projects() {
           return (
             <motion.div
               key={p.id || p.title}
+              data-active={isActive ? 'true' : 'false'}
               animate={{ x: translateX, scale, opacity, rotateY, z: isActive ? 100 : 0 }}
               transition={{ type: 'spring', stiffness: 260, damping: 28 }}
               onMouseEnter={() => { if (isActive) setHovered(i); }}
               onMouseLeave={() => setHovered(null)}
-              onClick={() => isActive ? navigate(`/project/${p.id}`) : setActive(i)}
+              onClick={() => { if (isActive) { playClick(); navigate(`/project/${p.id}`); } else { setActive(i); playCardSwitch(); } }}
               style={{ position: 'absolute', width: 320, zIndex, transformStyle: 'preserve-3d', perspective: 1000 }}
             >
               <div style={{
@@ -103,8 +116,6 @@ export default function Projects() {
                 position: 'relative', overflow: 'hidden',
               }}>
                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: isActive ? `linear-gradient(90deg, transparent, ${p.color}, transparent)` : 'transparent' }} />
-
-                <div style={{ fontSize: isActive ? '2.4rem' : '1.8rem', marginBottom: 14 }}>{p.icon || '🚀'}</div>
 
                 <h3 style={{
                   fontFamily: 'Orbitron', fontWeight: 700,

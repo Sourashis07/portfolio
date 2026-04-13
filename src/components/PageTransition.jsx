@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
+import { playWarp } from '../sounds';
 
 // ── Dark mode: rocket on lemniscate ──────────────────────
 function InfinityCanvas() {
@@ -175,6 +176,7 @@ export default function PageTransition({ children }) {
   const [phase, setPhase] = useState('in');
 
   useEffect(() => {
+    playWarp();
     setPhase('in');
     setVisible(true);
     const holdTimer = setTimeout(() => { setDisplayChildren(children); setPhase('out'); }, 1400);
